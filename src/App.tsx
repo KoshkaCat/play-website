@@ -1,8 +1,8 @@
 import './App.css';
 import React from "react";
-import Page from "./components/Page.tsx";
-import Counter from "./components/Counter.tsx"
-import Wordle from "./components/Wordle.tsx"
+import Page from "./components/Page";
+import Counter from "./components/Counter"
+import Wordle from "./components/Wordle"
 
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.css";

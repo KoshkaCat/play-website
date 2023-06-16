@@ -2,81 +2,78 @@ import React, { useState, useRef, useEffect } from "react";
 import { InputText } from "primereact/inputtext";
 import "./custom.css";
 
-
-interface Letter {
-    letter: string,
-    ref: React.MutableRefObject<null>
-}
-
 interface Guess {
-    first: Letter,
-    second: Letter,
-    third: Letter,
-    fourth: Letter,
-    fifth: Letter
+    content: string[],
+    submitted: boolean
 }
 
-const Wordle = () => {
+let currentLetter: number = 0;
+let currentGuess: number = 0;
+let correct: string = "piano";
 
-    let [guess, setGuess] = useState<Guess>({first: {letter: "", ref: useRef(null)}, 
-                                            second: {letter: "", ref: useRef(null)}, 
-                                            third: {letter: "", ref: useRef(null)}, 
-                                            fourth: {letter: "", ref: useRef(null)}, 
-                                            fifth: {letter: "", ref: useRef(null)}
-                                        });
-    // useEffect(() => {
-    //     guess.first.ref.current.focus();
-    // })
+const Wordle = (): React.JSX.Element => {
+
+    // string array of length 5, keeps track of current guess
+    let [allGuesses, setAllGuesses] = useState<Guess[]>(new Array(2).fill({content: new Array(5).fill(""), submitted: false}));
+
+    // number, keeps track of index within current guess
+    let [activeLetter, setActiveLetter] = useState<number>(0);
+    let [activeGuess, setActiveGuess] = useState<number>(0);
+    
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const handleOnChange = ({ target }: React.ChangeEvent<HTMLInputElement>): void => {
+        const { value } = target;
+        const newContent: string[] = [...allGuesses[activeGuess].content]
+        newContent[currentLetter] = value.substring(value.length - 1);
+        const newGuesses: Guess[] = [...allGuesses];
+        newGuesses[activeGuess] = {content: newContent, submitted: false};
+        if (!value) {
+            setActiveLetter(currentLetter - 1);
+        } else {
+            setActiveLetter(currentLetter + 1);
+        }
+        setAllGuesses(newGuesses);
+    };
+
+    useEffect((): void => {
+        inputRef.current?.focus();
+    })
+
+    const RenderLetters = (curGuessContent: string[], letterIndex: number) => {
+        return(
+            <InputText
+                ref={letterIndex === activeLetter ? inputRef: null} 
+                value={curGuessContent[letterIndex]}
+                keyfilter='alpha'
+                maxLength={1}
+                onChange={ handleOnChange }
+                onKeyDown={ (e) => {
+                    currentLetter = letterIndex;
+                    if (e.key === 'Backspace') {
+                        setActiveLetter(currentLetter - 1);
+                }} }
+            />
+        )
+    }
 
     return (
         <div >
             <h2>Wordle!</h2>
-            <InputText 
-                ref={guess.first.ref}
-                value={guess.first.letter}
-                keyfilter='alpha'
-                type='alpha'
-                maxLength={1}
-                onKeyDown={(e) => {setGuess({...guess, first: {...guess.first, letter: e.key}})
-                                console.log(e.target.value)
-                                if (e.target.value) {
-                                    guess.second.ref.current.focus();}
-                                }}
-            />
-            <InputText 
-                ref={guess.second.ref}
-                value={guess.second.letter} 
-                onChange={(e) => {setGuess({...guess, second: {...guess.second, letter: e.target.value}})
-                                guess.third.ref.current.focus();}}
-                onKeyDown={(e) => { if (e.key === 'Backspace') {setGuess({...guess, second: {...guess.second, letter: ""}});
-                                                                console.log(guess.first.letter);
-                                                                guess.first.ref.current.focus(); } }}
-                keyfilter='alpha'
-                maxLength={1}
-            />
-            <InputText 
-                ref={guess.third.ref}
-                value={guess.third.letter} 
-                onChange={(e) => {setGuess({...guess, third: {...guess.third, letter: e.target.value}})
-                                guess.fourth.ref.current.focus();}}
-                keyfilter='alpha'
-                maxLength={1}
-            />
-            <InputText 
-                ref={guess.fourth.ref}
-                value={guess.fourth.letter} 
-                onChange={(e) => {setGuess({...guess, fourth: {...guess.fourth, letter: e.target.value}})
-                                guess.fifth.ref.current.focus();}}
-                keyfilter='alpha'
-                maxLength={1}
-            />
-            <InputText 
-                ref={guess.fifth.ref}
-                value={guess.fifth.letter} 
-                onChange={(e) => setGuess({...guess, fifth: {...guess.fifth, letter: e.target.value}})}
-                keyfilter='alpha'
-                maxLength={1}
-            />
+
+            {allGuesses.map((_, guessIndex) => {
+                return(
+                    <div style={{marginTop: "5px"}}>
+                        {allGuesses[guessIndex].content.map((_, letterIndex) => {
+                            let curGuess = allGuesses[guessIndex];
+                            return(
+                                RenderLetters(curGuess.content, letterIndex)
+                            );
+                        })}
+                    </div>
+                    
+                );
+            })}
         </div>
     );
 };
