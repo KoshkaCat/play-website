@@ -1,6 +1,5 @@
 import './App.css';
 import React from "react";
-import Page from "./components/Page";
 import Counter from "./components/Counter"
 import Wordle from "./components/Wordle"
 
@@ -13,7 +12,6 @@ import 'primereact/resources/primereact.min.css';
 const App = () => {
   return (
     <div className="App">
-      <Page/>
       <Counter/>
       <br/>
       <Wordle/>
