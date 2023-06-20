@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { InputText } from "primereact/inputtext";
 import "./custom.css";
+import axios from "axios";
 
 // 0 = red, 1 = yellow, 2 = green
 interface Letter {
@@ -15,21 +16,34 @@ interface Guess {
 
 let currentLetter: number = 0;
 let currentGuess: number = 0;
-let correct: string = "piano";
+let correct: string = "acorn";
+let word: string = "";
+
+const options = {
+    method: 'GET',
+    url: "https://wordsapiv1.p.rapidapi.com/words/" + word + "/inRegion",
+    headers: {
+      'X-RapidAPI-Key': '03c3747e2bmshf2f3fa12066de7bp107ea5jsnc9e075b037c6',
+      'X-RapidAPI-Host': 'wordsapiv1.p.rapidapi.com'
+    }
+  };
 
 const green = {
     width: "40px",
-    backgroundColor: "green"
+    backgroundColor: "#44CA44",
+    color: "#000000"
 }
 
 const yellow = {
     width: "40px",
-    backgroundColor: "yellow"
+    backgroundColor: "#FAF25D",
+    color: "#000000"
 }
 
 const red = {
     width: "40px",
-    backgroundColor: "red"
+    backgroundColor: "#E83131",
+    color: "#000000"
 }
 
 
@@ -48,7 +62,7 @@ const Wordle = (): React.JSX.Element => {
         console.log("changed");
         const { value } = target;
         const newContent: Letter[] = [...allGuesses[activeGuess].content]
-        // TODO: change to "value[0]" since it should only be one?
+        // TODO: figure out why this works lol
         newContent[currentLetter] = {letter: value.substring(value.length - 1), color: 0};
         const newGuesses: Guess[] = [...allGuesses];
         newGuesses[activeGuess] = {content: newContent, submitted: false};
@@ -99,7 +113,6 @@ const Wordle = (): React.JSX.Element => {
                                 currentGuess = 10;
                                 setActiveGuess(10);
                             } else {
-                                // TODO: check if word contains useful letters
                                 for (let i = 0; i < colorGuess.content.length; i++) {
                                     for (let j = 0; j < colorGuess.content.length; j++) {
                                         if (colorGuess.content[i].letter === correct[j]) {
@@ -112,12 +125,7 @@ const Wordle = (): React.JSX.Element => {
                                     }
                                 }
                                 newGuesses[guessIndex] = colorGuess;
-                                //console.log("newGuesses[guessIndex].submitted: ", newGuesses[guessIndex].submitted);
-                                console.log("newGuesses: ", newGuesses);
-                                console.log("unmodified allGuesses: ", allGuesses);
                                 setAllGuesses(newGuesses);
-                                //console.log("index: ", guessIndex, ", submitted: ", allGuesses[guessIndex].submitted);
-                                console.log("allGuesses: ", allGuesses)
                                 setActiveGuess(currentGuess + 1);
                                 currentGuess++;
                                 setActiveLetter(0);
@@ -129,7 +137,6 @@ const Wordle = (): React.JSX.Element => {
                 />
             )
         } else if (!submitted && (guessIndex > currentGuess)) {
-            console.log("2 submitted: ", submitted, "guessIndex: ", guessIndex, "currentGuess: ", currentGuess);
             return(
                 <InputText
                     ref={null}
@@ -138,7 +145,6 @@ const Wordle = (): React.JSX.Element => {
                 />
             )
         } else if (submitted === true) {
-            console.log("3 submitted: ", submitted);
             if (colorGuess.content[letterIndex].color === 2) {
                 return(
                     <InputText
@@ -168,7 +174,13 @@ const Wordle = (): React.JSX.Element => {
                 )
             }
         } else {
-            console.log("currentGuess: ", currentGuess, ", guessIndex: ", guessIndex, ", submitted: ", allGuesses[guessIndex].submitted);
+            return(
+                <InputText
+                    ref={null}
+                    value={letters[letterIndex]}
+                    disabled
+                />
+            )
         }
     }
 
