@@ -17,16 +17,11 @@ interface Guess {
 let currentLetter: number = 0;
 let currentGuess: number = 0;
 let correct: string = "acorn";
-let word: string = "";
 
-const options = {
+const options = axios.create({
     method: 'GET',
-    url: "https://wordsapiv1.p.rapidapi.com/words/" + word + "/inRegion",
-    headers: {
-      'X-RapidAPI-Key': '03c3747e2bmshf2f3fa12066de7bp107ea5jsnc9e075b037c6',
-      'X-RapidAPI-Host': 'wordsapiv1.p.rapidapi.com'
-    }
-  };
+    url: "https://api.dictionaryapi.dev/api/v2/entries/en/"
+});
 
 const green = {
     width: "40px",
@@ -55,11 +50,11 @@ const Wordle = (): React.JSX.Element => {
     // number, keeps track of index within current guess
     let [activeLetter, setActiveLetter] = useState<number>(0);
     let [activeGuess, setActiveGuess] = useState<number>(0);
-    
+        
+    let [success, setSuccess] = useState<number>(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleOnChange = ({ target }: React.ChangeEvent<HTMLInputElement>): void => {
-        console.log("changed");
         const { value } = target;
         const newContent: Letter[] = [...allGuesses[activeGuess].content]
         // TODO: figure out why this works lol
@@ -75,19 +70,20 @@ const Wordle = (): React.JSX.Element => {
         setAllGuesses(newGuesses);
     };
 
+
+
     useEffect((): void => {
         inputRef.current?.focus();
     })
 
     const RenderLetter = (curGuessContent: Letter[], letterIndex: number, submitted: boolean, guessIndex: number) => {
-        console.log("guessIndex: ", guessIndex);
         let letters: string[] = new Array(5).fill("");
         let colorGuess: Guess = {...allGuesses[guessIndex]};
         let newGuesses: Guess[] = [...allGuesses];
         for (let i = 0; i < curGuessContent.length; i++) {
             letters[i] = curGuessContent[i].letter;
         }
-        console.log("currentGuess: ", currentGuess, ", guessIndex: ", guessIndex, ", submitted: ", allGuesses[guessIndex].submitted);
+
         if (!submitted && (guessIndex === currentGuess)) {
             return(
                 <InputText
@@ -102,36 +98,48 @@ const Wordle = (): React.JSX.Element => {
                             setActiveLetter(currentLetter - 1);
                         }
                         if (e.key === 'Enter' && activeLetter === 5) {
-                            console.log("enter!");
-                            colorGuess.submitted = true;
-                            if (letters.join("") === correct) {
-                                for (let i = 0; i < colorGuess.content.length; i++) {
-                                    colorGuess.content[i].color = 2;
+                            let word = letters.join("");
+                            axios.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + word).then((res) => {
+                                if (res.status === 200) {
+                                    setSuccess(1);
                                 }
-                                newGuesses[activeGuess] = colorGuess;
-                                setAllGuesses(newGuesses);
-                                currentGuess = 10;
-                                setActiveGuess(10);
-                            } else {
-                                for (let i = 0; i < colorGuess.content.length; i++) {
-                                    for (let j = 0; j < colorGuess.content.length; j++) {
-                                        if (colorGuess.content[i].letter === correct[j]) {
-                                            if (i === j) {
-                                                colorGuess.content[i].color = 2;
-                                            } else {
-                                                colorGuess.content[i].color = 1;
+                            }).catch((_err) => {
+                                setSuccess(0);
+                                
+                                console.log("success: ", success);
+                            });
+
+                            if (success === 1) {
+                                setSuccess(0);
+                                colorGuess.submitted = true;
+                                if (letters.join("") === correct) {
+                                    for (let i = 0; i < colorGuess.content.length; i++) {
+                                        colorGuess.content[i].color = 2;
+                                    }
+                                    newGuesses[activeGuess] = colorGuess;
+                                    setAllGuesses(newGuesses);
+                                    currentGuess = 10;
+                                    setActiveGuess(10);
+                                } else {
+                                    for (let i = 0; i < colorGuess.content.length; i++) {
+                                        for (let j = 0; j < colorGuess.content.length; j++) {
+                                            if (colorGuess.content[i].letter === correct[j]) {
+                                                if (i === j) {
+                                                    colorGuess.content[i].color = 2;
+                                                } else {
+                                                    colorGuess.content[i].color = 1;
+                                                }
                                             }
                                         }
                                     }
+                                    newGuesses[guessIndex] = colorGuess;
+                                    setAllGuesses(newGuesses);
+                                    setActiveGuess(currentGuess + 1);
+                                    currentGuess++;
+                                    setActiveLetter(0);
+                                    currentLetter = 0;
                                 }
-                                newGuesses[guessIndex] = colorGuess;
-                                setAllGuesses(newGuesses);
-                                setActiveGuess(currentGuess + 1);
-                                currentGuess++;
-                                setActiveLetter(0);
-                                currentLetter = 0;
                             }
-                            
                         }
                     } }
                 />
