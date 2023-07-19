@@ -47,10 +47,14 @@ const Wordle = (): React.JSX.Element => {
     // string array of length 5, keeps track of current guess
     let [allGuesses, setAllGuesses] = useState<Guess[]>(new Array(6).fill({content: new Array(5).fill({letter: "", color: 0}), submitted: false}));
 
-    // number, keeps track of index within current guess
+    // keeps track of index within current guess
     let [activeLetter, setActiveLetter] = useState<number>(0);
+    // keeps track of index within all guesses
     let [activeGuess, setActiveGuess] = useState<number>(0);
         
+    // current guess???
+    let [word, setWord] = useState<string>("");
+
     let [success, setSuccess] = useState<number>(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -71,10 +75,36 @@ const Wordle = (): React.JSX.Element => {
     };
 
 
+    async function callDict() {
+        await axios.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + word)
+            .then((res) => {
+                console.log(word);
+                if (res.status === 200) {
+                    setSuccess(1);
+                }
+            }).catch((_err) => {
+                console.log(word);
+                setSuccess(0);
+        });
+    }
 
     useEffect((): void => {
         inputRef.current?.focus();
+        
+            callDict();
+        
     })
+
+    const returnColor = (color: React.CSSProperties | undefined, letter: string) => {
+        return(
+            <InputText
+                ref={null}
+                value={letter}
+                disabled
+                style={color}
+            />
+        )
+    }
 
     const RenderLetter = (curGuessContent: Letter[], letterIndex: number, submitted: boolean, guessIndex: number) => {
         let letters: string[] = new Array(5).fill("");
@@ -97,17 +127,11 @@ const Wordle = (): React.JSX.Element => {
                         if (e.key === 'Backspace') {
                             setActiveLetter(currentLetter - 1);
                         }
+                        let word = letters.join("");
+                        setWord(word);
+
                         if (e.key === 'Enter' && activeLetter === 5) {
-                            let word = letters.join("");
-                            axios.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + word).then((res) => {
-                                if (res.status === 200) {
-                                    setSuccess(1);
-                                }
-                            }).catch((_err) => {
-                                setSuccess(0);
-                                
-                                console.log("success: ", success);
-                            });
+                            // callDict();
 
                             if (success === 1) {
                                 setSuccess(0);
@@ -145,49 +169,26 @@ const Wordle = (): React.JSX.Element => {
                 />
             )
         } else if (!submitted && (guessIndex > currentGuess)) {
-            return(
-                <InputText
-                    ref={null}
-                    value={letters[letterIndex]}
-                    disabled
-                />
-            )
+            return (
+                returnColor(undefined, letters[letterIndex])
+            );
         } else if (submitted === true) {
             if (colorGuess.content[letterIndex].color === 2) {
-                return(
-                    <InputText
-                        ref={null}
-                        value={letters[letterIndex]}
-                        disabled
-                        style={green}
-                    />
-                )
+                return (
+                    returnColor(green, letters[letterIndex])
+                );
             } else if (colorGuess.content[letterIndex].color === 1) {
-                return(
-                    <InputText
-                        ref={null}
-                        value={letters[letterIndex]}
-                        disabled
-                        style={yellow}
-                    />
-                )
+                return (
+                    returnColor(yellow, letters[letterIndex])
+                );
             } else {
-                return(
-                    <InputText
-                        ref={null}
-                        value={letters[letterIndex]}
-                        disabled
-                        style={red}
-                    />
-                )
+                return (
+                    returnColor(red, letters[letterIndex])
+                );
             }
         } else {
             return(
-                <InputText
-                    ref={null}
-                    value={letters[letterIndex]}
-                    disabled
-                />
+                returnColor(undefined, letters[letterIndex])
             )
         }
     }
